@@ -6,8 +6,8 @@ const systemInstruction = `あなたは、優秀な人材エージェントの�
 重要事項:
 - タグは、提供された情報源に明確に記載されているか、直接的に示唆されている内容に限定してください。
 - 過度な推測や、情報源に基づかない情報の生成は絶対に避けてください。
-- 特に「希望」や「その他・人柄」のカテゴリについては、発言者の言葉遣い、表現、明確な要望から客観的に判断できる事実のみをタグとしてください。
 -「人柄」は音声の時の話し方、またはコンサルタントの面談メモで書いてある以外は読み取れないと思うので無理に生成しないでください。
+- 特に「希望」や「その他・人柄」のカテゴリについては、発言者の言葉遣い、表現、明確な要望から客観的に判断できる事実のみをタグとしてください。
 - 該当する情報がない場合、そのカテゴリのタグは空の配列（[]）として問題ありません。無理にタグを生成する必要はありません。
 
 タグは「情報」「条件」「希望」「その他・人柄」の4つのカテゴリに分類し、指定されたJSONスキーマに厳密に従ってアウトプットしてください。`;
@@ -54,7 +54,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const callGeminiAPI = async (parts: any[]): Promise<GeneratedTags> => {
-    // FIX: Per coding guidelines, the API key must be retrieved from process.env.API_KEY.
+    // FIX: Replaced import.meta.env.VITE_API_KEY with process.env.API_KEY to adhere to coding guidelines and resolve the compilation error.
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
       throw new Error("APIキーが設定されていません。環境変数 'API_KEY' を設定してください。");
@@ -86,7 +86,7 @@ const callGeminiAPI = async (parts: any[]): Promise<GeneratedTags> => {
         };
     } catch (error) {
         console.error("Gemini API call failed:", error);
-        if (error instanceof Error && error.message.includes('API key not valid')) {
+        if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
              throw new Error("APIキーが無効です。正しいキーが設定されているか確認してください。");
         }
         throw new Error("AIモデルからの応答取得に失敗しました。入力内容を確認するか、時間をおいて再度お試しください。");
