@@ -1,19 +1,13 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { GeneratedTags } from '../types';
-
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable is not set.");
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const systemInstruction = `あなたは、優秀な人材エージェントのコンサルタントです。あなたのタスクは、提供された企業、求人、または求職者に関するテキスト情報（または音声情報の文字起こし）を分析し、関連性の高いタグを抽出することです。
 
 重要事項:
 - タグは、提供された情報源に明確に記載されているか、直接的に示唆されている内容に限定してください。
-- 過度な推測や、情報源に基づかない情報の生成は絶対に避けてください。
+- 推測や、情報源に基づかない情報の生成は絶対に避けてください。
 - 特に「希望」や「その他・人柄」のカテゴリについては、発言者の言葉遣い、表現、明確な要望から客観的に判断できる事実のみをタグとしてください。
+-「人柄」は音声の時の話し方、またはコンサルタントの面談メモで書いてある以外は読み取れないと思うので無理に生成しないでください。
 - 該当する情報がない場合、そのカテゴリのタグは空の配列（[]）として問題ありません。無理にタグを生成する必要はありません。
 
 タグは「情報」「条件」「希望」「その他・人柄」の4つのカテゴリに分類し、指定されたJSONスキーマに厳密に従ってアウトプットしてください。`;
@@ -60,6 +54,11 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const callGeminiAPI = async (parts: any[]): Promise<GeneratedTags> => {
+    if (!process.env.API_KEY) {
+      throw new Error("APIキーが設定されていません。Vercelのプロジェクト設定で環境変数 'API_KEY' を追加してください。");
+    }
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -85,13 +84,16 @@ const callGeminiAPI = async (parts: any[]): Promise<GeneratedTags> => {
         };
     } catch (error) {
         console.error("Gemini API call failed:", error);
+        if (error instanceof Error && error.message.includes('API key not valid')) {
+             throw new Error("APIキーが無効です。正しいキーが設定されているか確認してください。");
+        }
         throw new Error("AIモデルからの応答取得に失敗しました。入力内容を確認するか、時間をおいて再度お試しください。");
     }
 };
 
 export const generateTagsFromText = async (text: string): Promise<GeneratedTags> => {
   if (!text.trim()) {
-    throw new Error("Text input cannot be empty.");
+    throw new Error("テキストが入力されていません。");
   }
   const parts = [{ text }];
   return callGeminiAPI(parts);
