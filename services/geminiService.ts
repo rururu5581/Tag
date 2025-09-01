@@ -54,8 +54,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const callGeminiAPI = async (parts: any[]): Promise<GeneratedTags> => {
-    // FIX: Per coding guidelines, the API key must be obtained from `process.env.API_KEY`.
-    // This change also resolves the TypeScript error on `import.meta.env`.
+    // FIX: Per coding guidelines, the API key must be retrieved from process.env.API_KEY.
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
       throw new Error("APIキーが設定されていません。環境変数 'API_KEY' を設定してください。");
