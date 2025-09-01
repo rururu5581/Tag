@@ -5,7 +5,7 @@ const systemInstruction = `あなたは、優秀な人材エージェントの�
 
 重要事項:
 - タグは、提供された情報源に明確に記載されているか、直接的に示唆されている内容に限定してください。
-- 推測や、情報源に基づかない情報の生成は絶対に避けてください。
+- 過度な推測や、情報源に基づかない情報の生成は絶対に避けてください。
 - 特に「希望」や「その他・人柄」のカテゴリについては、発言者の言葉遣い、表現、明確な要望から客観的に判断できる事実のみをタグとしてください。
 -「人柄」は音声の時の話し方、またはコンサルタントの面談メモで書いてある以外は読み取れないと思うので無理に生成しないでください。
 - 該当する情報がない場合、そのカテゴリのタグは空の配列（[]）として問題ありません。無理にタグを生成する必要はありません。
@@ -54,10 +54,13 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 const callGeminiAPI = async (parts: any[]): Promise<GeneratedTags> => {
-    if (!process.env.API_KEY) {
-      throw new Error("APIキーが設定されていません。Vercelのプロジェクト設定で環境変数 'API_KEY' を追加してください。");
+    // FIX: Per coding guidelines, the API key must be obtained from `process.env.API_KEY`.
+    // This change also resolves the TypeScript error on `import.meta.env`.
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      throw new Error("APIキーが設定されていません。環境変数 'API_KEY' を設定してください。");
     }
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
 
     try {
         const response = await ai.models.generateContent({
